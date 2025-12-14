@@ -199,7 +199,7 @@
         <input type="text" id="address" required />
         <label>Phone Number</label>
         <input type="text" id="phone" required />
-        
+
         <button type="submit">Enter Shop</button>
       </form>
     </div>
@@ -248,6 +248,16 @@ shopping_cart
     <div id="variationPrice" style="margin:10px 0; font-weight:bold; font-size:1.1em;">Price: RM 0.00</div>
     <button id="variationAddToCart">Add to Cart</button>
     <button id="variationCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2>Remove Item?</h2>
+    <p id="deleteConfirmMessage">Are you sure you want to remove this item from your cart?</p>
+    <button id="deleteConfirmYes" style="margin-bottom:12px">Delete</button>
+    <button id="deleteConfirmNo">Cancel</button>
   </div>
 </div>
 </body>

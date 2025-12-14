@@ -54,6 +54,26 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('closeCart').addEventListener('click', () => cartSidebar.classList.remove('open'));
   let cart = [];
 
+  // ---------------- DELETE CONFIRMATION MODAL ----------------
+  const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+  const deleteConfirmYes = document.getElementById('deleteConfirmYes');
+  const deleteConfirmNo = document.getElementById('deleteConfirmNo');
+  let pendingDeleteIndex = -1;
+
+  deleteConfirmNo.addEventListener('click', () => {
+    deleteConfirmModal.style.display = 'none';
+    pendingDeleteIndex = -1;
+  });
+
+  deleteConfirmYes.addEventListener('click', () => {
+    if (pendingDeleteIndex !== -1) {
+      cart.splice(pendingDeleteIndex, 1);
+      deleteConfirmModal.style.display = 'none';
+      pendingDeleteIndex = -1;
+      updateCart();
+    }
+  });
+
   // ---------------- VARIATION MODAL ----------------
   const variationModal = document.getElementById('variationModal');
   const flavourOptionsDiv = document.getElementById('flavourOptions');
@@ -259,20 +279,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = table.querySelector('tbody');
 
         // ----- TABLE ROWS -----
-        cart.forEach(item => {
+        cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
 
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="padding:6px 0;">${item.name}</td>
-            <td style="text-align:center;">${item.quantity}</td>
+            <td style="text-align:center;">
+              <button style="width:24px; padding:2px; cursor:pointer;" data-index="${index}" data-action="decrease">−</button>
+              <span>${item.quantity}</span>
+              <button style="width:24px; padding:2px; cursor:pointer;" data-index="${index}" data-action="increase">+</button>
+            </td>
             <td style="text-align:right;">${itemTotal.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
         });
 
         cartItemsDiv.appendChild(table);
+
+        // ----- ADD EVENT LISTENERS TO QTY BUTTONS -----
+        const qtyButtons = cartItemsDiv.querySelectorAll('button[data-action]');
+        qtyButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const index = parseInt(btn.getAttribute('data-index'));
+            const action = btn.getAttribute('data-action');
+
+            if (action === 'increase') {
+              cart[index].quantity += 1;
+            } else if (action === 'decrease') {
+              cart[index].quantity -= 1;
+              if (cart[index].quantity <= 0) {
+                pendingDeleteIndex = index;
+                document.getElementById('deleteConfirmMessage').innerText = `Remove "${cart[index].name}" from cart?`;
+                deleteConfirmModal.style.display = 'flex';
+                return;
+              }
+            }
+            updateCart();
+          });
+        });
     }
 
     document.getElementById('cartTotal').innerText = total.toFixed(2);

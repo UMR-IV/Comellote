@@ -158,7 +158,7 @@ header h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 1002; /* above cart & nav */
 }
 
 /* Modal box */
@@ -348,6 +348,21 @@ nav a.cart-link {
 .cart-items table td {
   font-size: 14px;
   padding: 6px 0;
+}
+
+.cart-items table th:nth-child(1), 
+.cart-items table td:nth-child(1) {
+  width: auto;
+}
+
+.cart-items table th:nth-child(2), 
+.cart-items table td:nth-child(2) {
+  width: 64px;
+}
+
+.cart-items table th:nth-child(3), 
+.cart-items table td:nth-child(3) {
+  width: 75px;
 }
 
 .cart-user-info {
