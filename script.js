@@ -19,9 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
         const address = document.getElementById('address').value;
 
-        localStorage.setItem('shopUser', JSON.stringify({ name, address }));
+        localStorage.setItem('shopUser', JSON.stringify({ name, phone, address }));
 
         updateCartUserInfo(); // 👈 ADD THIS
         document.getElementById('loginModal').style.display = 'none';
@@ -37,12 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const { name, address } = JSON.parse(userData);
+    const { name, phone, address } = JSON.parse(userData);
 
     userInfoDiv.innerHTML = `
         <strong>Delivery For:</strong>
-        ${name}<br>
-        <small>${address}</small>
+        👤 ${name}<br>
+        <small>📌 ${address}</small><br>
+        <small>📞 ${phone}</small>
     `;
     }
 

@@ -6,6 +6,7 @@
   <link rel="icon" type="image/png" href="./assets/comellote.png">
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons"rel="stylesheet">
   <title>Comellote</title>
 </head>
 <body>
@@ -194,10 +195,11 @@
       <form id="login-form">
         <label>Name</label>
         <input type="text" id="name" required />
-
         <label>Address</label>
         <input type="text" id="address" required />
-
+        <label>Phone Number</label>
+        <input type="text" id="phone" required />
+        
         <button type="submit">Enter Shop</button>
       </form>
     </div>
@@ -219,7 +221,11 @@
 </div>
 
 <!-- Cart Button -->
-<button id="openCart" class="cart-button">🛒 Cart</button>
+<button id="openCart" class="cart-button">
+  <span class="material-icons" style="font-size: 16px;">
+shopping_cart
+</span>
+ Cart</button>
 
 <!-- Variation Modal -->
 <div id="variationModal" class="modal" style="display:none;">
