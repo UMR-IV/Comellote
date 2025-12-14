@@ -307,9 +307,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (action === 'increase') {
               cart[index].quantity += 1;
-            } else if (action === 'decrease') {
+            } else if (action === 'decrease' && cart[index].quantity > 0) {
               cart[index].quantity -= 1;
-              if (cart[index].quantity <= 0) {
+              if (cart[index].quantity == 0) {
+                cart[index].quantity += 1
                 pendingDeleteIndex = index;
                 document.getElementById('deleteConfirmMessage').innerText = `Remove "${cart[index].name}" from cart?`;
                 deleteConfirmModal.style.display = 'flex';

@@ -376,3 +376,11 @@ nav a.cart-link {
 .cart-user-info strong {
   display: block;
 }
+
+.checkout-button {
+  color: white;
+  padding: 12px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
