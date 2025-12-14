@@ -290,5 +290,8 @@ const productDescriptions = {
   "Cheestarts (49pcs)": "🕰️ 3-4 days prior to date booking\n💎 2  pilihan toppings (assorted @ fruits)\n🍫 Toppings custom boleh tulis dalam customer request dalam cart XXXXXXXXXXXXXXXXXXXXX_RECONFIRM_XXXXXXXXXXXXXXXXXXXXXXXXXXXXx\n✅ Toppings subject to availability",
   "Creme Brulee": "25 pcs mini pack",
   "Seasalt Choc Chip Cookies (~220gm)": "🍬 Available untuk doorgifts(>RM5/pack)\n🍫 Dark Chocolate berkualiti\n😋 Ketagih rate 9/10\n🍡 Manis sedang sedang + seasalt flakes sikit dekat atas cookies",
-  "Soft Cookies": "🍫 Dark Chocolate\n🍬 Not too sweet\n🤏 Too sedap to resist"
+  "Soft Cookies": "🍫 Dark Chocolate\n🍬 Not too sweet\n🤏 Too sedap to resist",
+  "Koleh Kacang 12''": " ",
+  "Pulut Sekaya 10''": " ",
+  "Kaswi Pandan 10''": "81 pcs",
 };
