@@ -1,3 +1,7 @@
+import { database, auth } from './firebase-config.js';
+import { ref, push, set } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
 document.addEventListener('DOMContentLoaded', () => {
   const productCards = document.querySelectorAll('.product-card');
 
@@ -32,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateCartUserInfo() {
     const userInfoDiv = document.getElementById('cartUserInfo');
     const userData = localStorage.getItem('shopUser');
-
     if (!userData) {
         userInfoDiv.innerHTML = '<em>No delivery info</em>';
         return;
@@ -53,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('openCart').addEventListener('click', () => cartSidebar.classList.add('open'));
   document.getElementById('closeCart').addEventListener('click', () => cartSidebar.classList.remove('open'));
   let cart = [];
+
+  const requestInput = document.getElementById('customerRequest');  //saved in requestInput.value
 
   // ---------------- DELETE CONFIRMATION MODAL ----------------
   const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -324,6 +329,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('cartTotal').innerText = total.toFixed(2);
   }
+
+  // Save order to Firebase
+  const checkoutButton = document.getElementById('checkoutButton');
+  checkoutButton.addEventListener('click', async () => {
+    if (cart.length === 0) {
+      alert('Your cart is empty!');
+      return;
+    }
+
+    const userData = localStorage.getItem('shopUser');
+    const customerRequest = document.getElementById('customerRequest').value;
+    
+    if (!userData) {
+      alert('Please fill in delivery information first!');
+      return;
+    }
+
+    try {
+      const { name, phone, address } = JSON.parse(userData);
+      const ordersRef = ref(database, 'orders');
+      const newOrderRef = push(ordersRef);
+
+      // Order data WITHOUT userId (for anonymous users per your security rules)
+      const orderData = {
+        customerName: name,
+        phone: phone,
+        address: address,
+        items: cart,
+        customerRequest: customerRequest,
+        total: parseFloat(document.getElementById('cartTotal').innerText),
+        timestamp: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      await set(newOrderRef, orderData);
+      
+      alert('✅ Order placed successfully!\nOrder ID: ' + newOrderRef.key);
+      cart = [];
+      document.getElementById('customerRequest').value = '';
+      updateCart();
+      cartSidebar.classList.remove('open');
+    } catch (error) {
+      console.error('❌ Error saving order:', error);
+      alert('Error: ' + error.message);
+    }
+  });
 
 });
 

@@ -388,3 +388,28 @@ nav a.cart-link {
   cursor: pointer;
   font-size: 16px;
 }
+
+.cart-request {
+  margin-top: 15px;
+}
+
+.cart-request label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.cart-request textarea {
+  width: 100%;
+  resize: none;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.cart-request textarea:focus {
+  outline: none;
+  border-color: #ff8c94;
+}
