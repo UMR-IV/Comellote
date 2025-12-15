@@ -2,8 +2,8 @@
 
 A modern, responsive online bakery ordering platform built with JavaScript and Firebase. Browse pastries, cakes, cookies, and traditional Malaysian treats.
 
-**Production Website:** https://comellote.web.app
-**Development Website:** https://cmlt-e5d5e.web.app
+- **Production Website:** https://comellote.web.app
+- **Development Website:** https://cmlt-e5d5e.web.app
 
 ## Tech Stack 🛠️
 
