@@ -1,6 +1,10 @@
 # Firebase config with real credentials
 firebase-config.js
 
+# Firebase local cache and logs
+.firebase/
+.firebaserc
+
 # Node modules (if you use npm packages)
 node_modules/
 
@@ -18,4 +22,5 @@ Thumbs.db
 
 # Build outputs
 dist/
+build/
 build/
