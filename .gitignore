@@ -1,0 +1,21 @@
+# Firebase config with real credentials
+firebase-config.js
+
+# Node modules (if you use npm packages)
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Build outputs
+dist/
+build/

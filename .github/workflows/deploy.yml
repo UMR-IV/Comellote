@@ -1,0 +1,33 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Create firebase-config.js from secret
+        run: |
+          cat > firebase-config.js << 'EOF'
+          // Import Firebase modules
+          import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+          import { getDatabase } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+          import { getAuth } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+          const firebaseConfig = ${{ secrets.FIREBASE_CONFIG }};
+
+          const app = initializeApp(firebaseConfig);
+          export const database = getDatabase(app);
+          export const auth = getAuth(app);
+          export default app;
+          EOF
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
