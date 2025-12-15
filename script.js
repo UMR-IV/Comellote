@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateCartUserInfo() {
     const userInfoDiv = document.getElementById('cartUserInfo');
     const userData = localStorage.getItem('shopUser');
-
     if (!userData) {
         userInfoDiv.innerHTML = '<em>No delivery info</em>';
         return;
@@ -53,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('openCart').addEventListener('click', () => cartSidebar.classList.add('open'));
   document.getElementById('closeCart').addEventListener('click', () => cartSidebar.classList.remove('open'));
   let cart = [];
+
+  const requestInput = document.getElementById('customerRequest');  //saved in requestInput.value
 
   // ---------------- DELETE CONFIRMATION MODAL ----------------
   const deleteConfirmModal = document.getElementById('deleteConfirmModal');
