@@ -21,40 +21,39 @@ document.addEventListener('DOMContentLoaded', () => {
   const deliveryDateInput = document.getElementById('deliveryDate');
   const dateWarning = document.getElementById('dateWarning');
 
+  // Set minimum date to today
+  const today = new Date();
+  const minDate = today.toISOString().split('T')[0];
+  deliveryDateInput.min = minDate;
+
+  // Add event listener ONCE to check if selected date is blocked
+  deliveryDateInput.addEventListener('change', (e) => {
+    const selectedDate = e.target.value;
+    if (blockedDates.includes(selectedDate)) {
+      dateWarning.style.display = 'block';
+      deliveryDateInput.value = '';
+      deliveryDateInput.classList.add('error');
+    } else {
+      dateWarning.style.display = 'none';
+      deliveryDateInput.classList.remove('error');
+    }
+  });
+
   // Fetch blocked dates from Firebase
   const blockedDatesRef = ref(database, 'blockedDates');
   onValue(blockedDatesRef, (snapshot) => {
+    console.log('blockedDates snapshot received:', snapshot.val());
     if (snapshot.exists()) {
       const data = snapshot.val();
+      console.log('Raw data from Firebase:', data);
       blockedDates = Object.keys(data).filter(date => data[date] === true);
-      updateDateInputConstraints();
+      console.log('Filtered blockedDates array:', blockedDates);
+    } else {
+      console.log('No blockedDates node found');
     }
   }, (error) => {
-    console.log('No blocked dates yet or permission denied');
+    console.error('Error fetching blocked dates:', error);
   });
-
-  // Set minimum date to today and disable blocked dates
-  function updateDateInputConstraints() {
-    const today = new Date();
-    const minDate = today.toISOString().split('T')[0];
-    deliveryDateInput.min = minDate;
-
-    // Add event listener to check if selected date is blocked
-    deliveryDateInput.addEventListener('change', (e) => {
-      const selectedDate = e.target.value;
-      if (blockedDates.includes(selectedDate)) {
-        dateWarning.style.display = 'block';
-        deliveryDateInput.value = '';
-        deliveryDateInput.classList.add('error');
-      } else {
-        dateWarning.style.display = 'none';
-        deliveryDateInput.classList.remove('error');
-      }
-    });
-  }
-
-  // Call on initial load
-  updateDateInputConstraints();
 
   // ---------------- LOGIN FORM ----------------
   const loginForm = document.getElementById('login-form');
@@ -391,6 +390,15 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Please select a delivery date!');
       return;
     }
+
+    // Check if the selected date is blocked
+    if (blockedDates.includes(deliveryDate)) {
+      alert('❌ This date is not available for delivery. Please select another date.');
+      deliveryDateInput.value = '';
+      return;
+    }
+
+    console.log('Checkout validation - deliveryDate:', deliveryDate, 'blockedDates:', blockedDates, 'isBlocked:', blockedDates.includes(deliveryDate));
 
     try {
       const { name, phone, address } = JSON.parse(userData);
