@@ -380,9 +380,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const userData = localStorage.getItem('shopUser');
     const customerRequest = document.getElementById('customerRequest').value;
+    const deliveryDate = document.getElementById('deliveryDate').value;
     
     if (!userData) {
       alert('Please fill in delivery information first!');
+      return;
+    }
+
+    if (!deliveryDate) {
+      alert('Please select a delivery date!');
       return;
     }
 
@@ -398,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         address: address,
         items: cart,
         customerRequest: customerRequest,
+        deliveryDate: deliveryDate,
         total: parseFloat(document.getElementById('cartTotal').innerText),
         timestamp: new Date().toISOString(),
         status: 'pending'
