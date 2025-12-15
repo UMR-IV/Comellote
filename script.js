@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add event listener ONCE to check if selected date is blocked
   deliveryDateInput.addEventListener('change', (e) => {
     const selectedDate = e.target.value;
+
     if (blockedDates.includes(selectedDate)) {
+      alert('❌ This date is not available for delivery. Please select another date.');
       dateWarning.style.display = 'block';
       deliveryDateInput.value = '';
       deliveryDateInput.classList.add('error');
