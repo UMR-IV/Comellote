@@ -227,13 +227,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (quantity === "25 pcs") {
             if (selectedFlavourIndices.length === 0) {
-            alert('Please select at least 1 flavour!');
+            alert('Please select at least 1 variation!');
             return;
             }
             flavoursSelected = selectedFlavourIndices.map(idx => variations.flavours[idx].name);
         } else {
             if (selectedFlavourIndex === -1) {
-            alert('Please select a flavour!');
+            alert('Please select a variation!');
             return;
             }
             flavoursSelected = [variations.flavours[selectedFlavourIndex].name];
@@ -451,4 +451,5 @@ const productDescriptions = {
   "Koleh Kacang 12''": " ",
   "Pulut Sekaya 10''": " ",
   "Kaswi Pandan 10''": "81 pcs",
+  "Sandwich (25 pcs)": "🍖 Gourmet Chicken @ Beef Pepperoni Strips @ Tuna \n🏷️ Additional charge for 🍅 & easy bite cut"
 };
