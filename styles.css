@@ -4,7 +4,7 @@ body {
     padding: 0;
     
     /* background image */
-    background-image: url('./assets/your-image.jpg'); /* path to your image */
+    /*background-image: url('./assets/your-image.jpg'); /* path to your image */
     background-size: cover;      /* make it cover the whole page */
     background-repeat: no-repeat; /* prevent tiling */
     background-position: center;  /* center the image */
@@ -492,4 +492,21 @@ nav a.cart-link {
 .cart-user-info strong {
   display: block;
   margin-bottom: 3px;
+}
+
+.receipt-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* horizontal center */
+  gap: 8px;              /* space between label & input */
+  margin-top: 10px;
+}
+
+.receipt-upload label {
+  font-weight: 600;
+  text-align: center;
+}
+
+.receipt-upload input[type="file"] {
+  text-align: center;
 }

@@ -1,6 +1,25 @@
-import { database, auth } from './firebase-config.js';
-import { ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { ref, push, set, onValue } 
+  from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } 
+  from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } 
+  from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
+
+import { database } from './firebase-config.js';
+
+// 1️⃣ Initialize auth
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+// 2️⃣ Automatically sign in anonymously
+signInAnonymously(auth)
+  .then(() => console.log("Anonymous user signed in"))
+  .catch(err => console.error("Anonymous sign-in failed:", err));
+
+// 3️⃣ Initialize storage
+const storage = getStorage();
 
 document.addEventListener('DOMContentLoaded', () => {
   const productCards = document.querySelectorAll('.product-card');
@@ -12,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const p = document.createElement('p');
     p.innerText = desc;
-    p.style.whiteSpace = "pre-line"; // allows newlines
+    p.style.whiteSpace = "pre-line";
     card.insertBefore(p, card.querySelector('.price'));
   });
 
@@ -21,15 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const deliveryDateInput = document.getElementById('deliveryDate');
   const dateWarning = document.getElementById('dateWarning');
 
-  // Set minimum date to today
   const today = new Date();
   const minDate = today.toISOString().split('T')[0];
   deliveryDateInput.min = minDate;
 
-  // Add event listener ONCE to check if selected date is blocked
   deliveryDateInput.addEventListener('change', (e) => {
     const selectedDate = e.target.value;
-
     if (blockedDates.includes(selectedDate)) {
       alert('❌ This date is not available for delivery. Please select another date.');
       dateWarning.style.display = 'block';
@@ -41,36 +57,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Fetch blocked dates from Firebase
   const blockedDatesRef = ref(database, 'blockedDates');
   onValue(blockedDatesRef, (snapshot) => {
-    console.log('blockedDates snapshot received:', snapshot.val());
     if (snapshot.exists()) {
       const data = snapshot.val();
-      console.log('Raw data from Firebase:', data);
       blockedDates = Object.keys(data).filter(date => data[date] === true);
-      console.log('Filtered blockedDates array:', blockedDates);
-    } else {
-      console.log('No blockedDates node found');
     }
-  }, (error) => {
-    console.error('Error fetching blocked dates:', error);
   });
 
   // ---------------- LOGIN FORM ----------------
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {
-        e.preventDefault();
+      e.preventDefault();
 
-        const name = document.getElementById('name').value;
-        const phone = document.getElementById('phone').value;
-        const address = document.getElementById('address').value;
+      const name = document.getElementById('name').value;
+      const phone = document.getElementById('phone').value;
+      const address = document.getElementById('address').value;
 
-        localStorage.setItem('shopUser', JSON.stringify({ name, phone, address }));
+      localStorage.setItem('shopUser', JSON.stringify({ name, phone, address }));
 
-        updateCartUserInfo(); // 👈 ADD THIS
-        document.getElementById('loginModal').style.display = 'none';
+      updateCartUserInfo();
+      document.getElementById('loginModal').style.display = 'none';
     });
   }
 
@@ -81,24 +89,21 @@ document.addEventListener('DOMContentLoaded', () => {
         userInfoDiv.innerHTML = '<em>No delivery info</em>';
         return;
     }
-
     const { name, phone, address } = JSON.parse(userData);
-
     userInfoDiv.innerHTML = `
         <strong>Delivery For:</strong>
         👤 ${name}<br>
         <small>📌 ${address}</small><br>
         <small>📞 ${phone}</small>
     `;
-    }
+  }
 
   // ---------------- CART SIDEBAR ----------------
   const cartSidebar = document.getElementById('cartSidebar');
   document.getElementById('openCart').addEventListener('click', () => cartSidebar.classList.add('open'));
   document.getElementById('closeCart').addEventListener('click', () => cartSidebar.classList.remove('open'));
   let cart = [];
-
-  const requestInput = document.getElementById('customerRequest');  //saved in requestInput.value
+  const requestInput = document.getElementById('customerRequest');
 
   // ---------------- DELETE CONFIRMATION MODAL ----------------
   const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -106,19 +111,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteConfirmNo = document.getElementById('deleteConfirmNo');
   let pendingDeleteIndex = -1;
 
-  deleteConfirmNo.addEventListener('click', () => {
-    deleteConfirmModal.style.display = 'none';
-    pendingDeleteIndex = -1;
-  });
-
-  deleteConfirmYes.addEventListener('click', () => {
-    if (pendingDeleteIndex !== -1) {
-      cart.splice(pendingDeleteIndex, 1);
+  if (deleteConfirmNo && deleteConfirmYes && deleteConfirmModal) {
+    deleteConfirmNo.addEventListener('click', () => {
       deleteConfirmModal.style.display = 'none';
       pendingDeleteIndex = -1;
-      updateCart();
-    }
-  });
+    });
+
+    deleteConfirmYes.addEventListener('click', () => {
+      if (pendingDeleteIndex !== -1) {
+        cart.splice(pendingDeleteIndex, 1);
+        deleteConfirmModal.style.display = 'none';
+        pendingDeleteIndex = -1;
+        updateCart();
+      }
+    });
+  }
 
   // ---------------- VARIATION MODAL ----------------
   const variationModal = document.getElementById('variationModal');
@@ -128,9 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const variationAddToCart = document.getElementById('variationAddToCart');
   const variationCancel = document.getElementById('variationCancel');
   const variationPriceDiv = document.getElementById('variationPrice');
+  const toPaymentBtn = document.getElementById('toPayment');
+  const paymentModal = document.getElementById('paymentModal');
 
-  let selectedFlavourIndex = -1;       // single selection
-  let selectedFlavourIndices = [];     // multiple selection for 25pcs
+  let selectedFlavourIndex = -1;
+  let selectedFlavourIndices = [];
   let selectedQuantityIndex = -1;
   let variations = null;
 
@@ -154,104 +163,75 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       variations = JSON.parse(variationsData);
-
-      // Reset selections
       selectedFlavourIndex = -1;
       selectedFlavourIndices = [];
       selectedQuantityIndex = -1;
       flavourOptionsDiv.innerHTML = '';
       quantityOptionsDiv.innerHTML = '';
-
       variationProductName.innerText = productName;
 
-      // Flavour buttons
       variations.flavours.forEach((f, i) => {
         const btnF = document.createElement('button');
         btnF.innerText = f.name;
 
         btnF.addEventListener('click', () => {
           const quantity = variations.quantities[selectedQuantityIndex];
-
           if (quantity === "25 pcs") {
-            // allow max 2 flavours
-            if (selectedFlavourIndices.includes(i)) {
-              selectedFlavourIndices = selectedFlavourIndices.filter(idx => idx !== i);
-            } else {
-              if (selectedFlavourIndices.length < 2) selectedFlavourIndices.push(i);
-            }
+            if (selectedFlavourIndices.includes(i)) selectedFlavourIndices = selectedFlavourIndices.filter(idx => idx !== i);
+            else if (selectedFlavourIndices.length < 2) selectedFlavourIndices.push(i);
             highlightMultipleSelection(flavourOptionsDiv, selectedFlavourIndices);
-            selectedFlavourIndex = -1; // reset single selection
+            selectedFlavourIndex = -1;
           } else {
-            // single flavour selection
             selectedFlavourIndex = i;
             highlightSelection(flavourOptionsDiv, i);
             selectedFlavourIndices = [];
           }
-
           updateVariationPrice();
         });
 
         flavourOptionsDiv.appendChild(btnF);
       });
 
-      // Quantity buttons
       variations.quantities.forEach((q, i) => {
         const btnQ = document.createElement('button');
         btnQ.innerText = q;
         btnQ.addEventListener('click', () => {
           selectedQuantityIndex = i;
-
-          // Reset flavour selection on quantity change
           selectedFlavourIndex = -1;
           selectedFlavourIndices = [];
           highlightSelection(flavourOptionsDiv, -1);
-
           highlightSelection(quantityOptionsDiv, i);
           updateVariationPrice();
         });
         quantityOptionsDiv.appendChild(btnQ);
       });
 
-      // Default price
       variationPriceDiv.innerText = "Price: RM 0.00";
 
-      // Add to cart
       variationAddToCart.onclick = () => {
-        if (selectedQuantityIndex === -1) {
-            alert('Please select a quantity!');
-            return;
-        }
+        if (selectedQuantityIndex === -1) { alert('Please select a quantity!'); return; }
 
         let flavoursSelected = [];
         const quantity = variations.quantities[selectedQuantityIndex];
 
         if (quantity === "25 pcs") {
-            if (selectedFlavourIndices.length === 0) {
-            alert('Please select at least 1 variation!');
-            return;
-            }
-            flavoursSelected = selectedFlavourIndices.map(idx => variations.flavours[idx].name);
+          if (selectedFlavourIndices.length === 0) { alert('Please select at least 1 variation!'); return; }
+          flavoursSelected = selectedFlavourIndices.map(idx => variations.flavours[idx].name);
         } else {
-            if (selectedFlavourIndex === -1) {
-            alert('Please select a variation!');
-            return;
-            }
-            flavoursSelected = [variations.flavours[selectedFlavourIndex].name];
+          if (selectedFlavourIndex === -1) { alert('Please select a variation!'); return; }
+          flavoursSelected = [variations.flavours[selectedFlavourIndex].name];
         }
 
-        // compute price
         let price = 0;
         if (quantity === "25 pcs") {
-            const prices = selectedFlavourIndices.map(idx => variations.flavours[idx].prices[selectedQuantityIndex]);
-            price = prices.reduce((sum, p) => sum + p, 0) / prices.length; // average
-        } else {
-            price = variations.flavours[selectedFlavourIndex].prices[selectedQuantityIndex];
-        }
+          const prices = selectedFlavourIndices.map(idx => variations.flavours[idx].prices[selectedQuantityIndex]);
+          price = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+        } else { price = variations.flavours[selectedFlavourIndex].prices[selectedQuantityIndex]; }
 
         const flavourText = flavoursSelected.join(" & ");
         addToCart(`${variationProductName.innerText} (${flavourText} - ${quantity})`, price);
         variationModal.style.display = 'none';
-    };
+      };
 
       variationModal.style.display = 'flex';
     });
@@ -259,36 +239,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---------------- HELPER FUNCTIONS ----------------
   function highlightSelection(container, index) {
-    Array.from(container.children).forEach((btn, i) => {
-      btn.classList.toggle('selected', i === index);
-    });
+    Array.from(container.children).forEach((btn, i) => btn.classList.toggle('selected', i === index));
   }
 
   function highlightMultipleSelection(container, indices) {
-    Array.from(container.children).forEach((btn, i) => {
-      btn.classList.toggle('selected', indices.includes(i));
-    });
+    Array.from(container.children).forEach((btn, i) => btn.classList.toggle('selected', indices.includes(i)));
   }
 
   function updateVariationPrice() {
-  if (!variations || selectedQuantityIndex === -1) {
-    variationPriceDiv.innerText = "Price: RM 0.00";
-    return;
+    if (!variations || selectedQuantityIndex === -1) { variationPriceDiv.innerText = "Price: RM 0.00"; return; }
+    const quantity = variations.quantities[selectedQuantityIndex];
+    let price = 0;
+    if (quantity === "25 pcs" && selectedFlavourIndices.length > 0) {
+      const prices = selectedFlavourIndices.map(idx => variations.flavours[idx].prices[selectedQuantityIndex]);
+      price = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+    } else if (selectedFlavourIndex !== -1) {
+      price = variations.flavours[selectedFlavourIndex].prices[selectedQuantityIndex];
+    }
+    variationPriceDiv.innerText = `Price: RM ${price.toFixed(2)}`;
   }
-
-  const quantity = variations.quantities[selectedQuantityIndex];
-  let price = 0;
-
-  if (quantity === "25 pcs" && selectedFlavourIndices.length > 0) {
-    // calculate average of selected flavours
-    const prices = selectedFlavourIndices.map(idx => variations.flavours[idx].prices[selectedQuantityIndex]);
-    price = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-  } else if (selectedFlavourIndex !== -1) {
-    price = variations.flavours[selectedFlavourIndex].prices[selectedQuantityIndex];
-  }
-
-  variationPriceDiv.innerText = `Price: RM ${price.toFixed(2)}`;
-}
 
   function addToCart(name, price) {
     const existing = cart.find(item => item.name === name);
@@ -303,165 +272,194 @@ document.addEventListener('DOMContentLoaded', () => {
     cartItemsDiv.innerHTML = '';
     let total = 0;
 
-    if (cart.length === 0) {
-        cartItemsDiv.innerHTML = '<p>Your cart is empty.</p>';
-    } else {
-        const table = document.createElement('table');
-        table.style.width = '100%';
-        table.style.borderCollapse = 'collapse';
+    if (cart.length === 0) cartItemsDiv.innerHTML = '<p>Your cart is empty.</p>';
+    else {
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.innerHTML = `
+      <thead>
+        <tr>
+          <th style="text-align:left;">Item</th>
+          <th style="text-align:center;">Qty</th>
+          <th style="text-align:right;">Price (RM)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
 
-        // ----- TABLE HEADER -----
-        table.innerHTML = `
-        <thead>
-            <tr>
-            <th style="text-align:left;">Item</th>
-            <th style="text-align:center;">Qty</th>
-            <th style="text-align:right;">Price (RM)</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-        `;
-
-        const tbody = table.querySelector('tbody');
-
-        // ----- TABLE ROWS -----
-        cart.forEach((item, index) => {
+      cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td style="padding:6px 0;">${item.name}</td>
-            <td style="text-align:center;">
-              <button style="width:24px; padding:2px; cursor:pointer;" data-index="${index}" data-action="decrease">−</button>
-              <span>${item.quantity}</span>
-              <button style="width:24px; padding:2px; cursor:pointer;" data-index="${index}" data-action="increase">+</button>
-            </td>
-            <td style="text-align:right;">${itemTotal.toFixed(2)}</td>
+          <td style="padding:6px 0;">${item.name}</td>
+          <td style="text-align:center;">
+            <button style="width:24px; padding:2px; cursor:pointer;" data-index="${index}" data-action="decrease">−</button>
+            <span>${item.quantity}</span>
+            <button style="width:24px; padding:2px; cursor:pointer;" data-index="${index}" data-action="increase">+</button>
+          </td>
+          <td style="text-align:right;">${itemTotal.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
-        });
+      });
 
-        cartItemsDiv.appendChild(table);
+      cartItemsDiv.appendChild(table);
 
-        // ----- ADD EVENT LISTENERS TO QTY BUTTONS -----
-        const qtyButtons = cartItemsDiv.querySelectorAll('button[data-action]');
-        qtyButtons.forEach(btn => {
-          btn.addEventListener('click', () => {
-            const index = parseInt(btn.getAttribute('data-index'));
-            const action = btn.getAttribute('data-action');
+      const qtyButtons = cartItemsDiv.querySelectorAll('button[data-action]');
+      qtyButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const index = parseInt(btn.getAttribute('data-index'));
+          const action = btn.getAttribute('data-action');
 
-            if (action === 'increase') {
-              cart[index].quantity += 1;
-            } else if (action === 'decrease' && cart[index].quantity > 0) {
-              cart[index].quantity -= 1;
-              if (cart[index].quantity == 0) {
-                cart[index].quantity += 1
-                pendingDeleteIndex = index;
-                document.getElementById('deleteConfirmMessage').innerText = `Remove "${cart[index].name}" from cart?`;
-                deleteConfirmModal.style.display = 'flex';
-                return;
-              }
+          if (action === 'increase') cart[index].quantity += 1;
+          else if (action === 'decrease' && cart[index].quantity > 0) {
+            cart[index].quantity -= 1;
+            if (cart[index].quantity == 0) {
+              cart[index].quantity += 1
+              pendingDeleteIndex = index;
+              document.getElementById('deleteConfirmMessage').innerText = `Remove "${cart[index].name}" from cart?`;
+              deleteConfirmModal.style.display = 'flex';
+              return;
             }
-            updateCart();
-          });
+          }
+          updateCart();
         });
+      });
     }
 
     document.getElementById('cartTotal').innerText = total.toFixed(2);
   }
 
-  // Save order to Firebase
+  // ---------------- CHECKOUT ----------------
   const checkoutButton = document.getElementById('checkoutButton');
-  checkoutButton.addEventListener('click', async () => {
-    if (cart.length === 0) {
-      alert('Your cart is empty!');
-      return;
-    }
+
+  checkoutButton.addEventListener('click', () => {
+    if (cart.length === 0) { alert('Your cart is empty!'); return; }
 
     const userData = localStorage.getItem('shopUser');
-    const customerRequest = document.getElementById('customerRequest').value;
     const deliveryDate = document.getElementById('deliveryDate').value;
-    
-    if (!userData) {
-      alert('Please fill in delivery information first!');
-      return;
-    }
 
-    if (!deliveryDate) {
-      alert('Please select a delivery date!');
-      return;
-    }
+    if (!userData) { alert('Please fill in delivery information first!'); return; }
+    if (!deliveryDate) { alert('Please select a delivery date!'); return; }
+    if (blockedDates.includes(deliveryDate)) { alert('❌ This date is not available for delivery.'); return; }
 
-    // Check if the selected date is blocked
-    if (blockedDates.includes(deliveryDate)) {
-      alert('❌ This date is not available for delivery. Please select another date.');
-      deliveryDateInput.value = '';
-      return;
-    }
-
-    console.log('Checkout validation - deliveryDate:', deliveryDate, 'blockedDates:', blockedDates, 'isBlocked:', blockedDates.includes(deliveryDate));
-
-    try {
-      const { name, phone, address } = JSON.parse(userData);
-      const ordersRef = ref(database, 'orders');
-      const newOrderRef = push(ordersRef);
-
-      // Order data WITHOUT userId (for anonymous users per your security rules)
-      const orderData = {
-        customerName: name,
-        phone: phone,
-        address: address,
-        items: cart,
-        customerRequest: customerRequest,
-        deliveryDate: deliveryDate,
-        total: parseFloat(document.getElementById('cartTotal').innerText),
-        timestamp: new Date().toISOString(),
-        status: 'pending'
-      };
-
-      await set(newOrderRef, orderData);
-      
-      alert('✅ Order placed successfully!\nOrder ID: ' + newOrderRef.key);
-      cart = [];
-      document.getElementById('customerRequest').value = '';
-      updateCart();
-      cartSidebar.classList.remove('open');
-    } catch (error) {
-      console.error('❌ Error saving order:', error);
-      alert('Error: ' + error.message);
-    }
+    paymentModal.style.display = 'flex';
   });
 
-  // ==================== SMOOTH SCROLL FOR NAV LINKS WITH OFFSET ====================
+  // ---------------- SMOOTH SCROLL ----------------
   document.querySelectorAll('nav a[href^="#"]').forEach(link => {
-      link.addEventListener('click', function(e) {
-          e.preventDefault(); // prevent instant jump
-
-          const targetId = this.getAttribute('href');
-          const targetElement = document.querySelector(targetId);
-
-          if (targetElement) {
-              let offsetPosition;
-
-              if (targetId === '#pastry') {
-                  // Scroll to very top for #pastry
-                  offsetPosition = 0;
-              } else {
-                  // Scroll 20px above other sections
-                  offsetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - 20;
-              }
-
-              window.scrollTo({
-                  top: offsetPosition,
-                  behavior: "smooth"
-              });
-          }
-      });
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        let offsetPosition = targetId === '#pastry' ? 0 : targetElement.getBoundingClientRect().top + window.pageYOffset - 20;
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+      }
+    });
   });
+
+  // ---------------- PAYMENT & ORDER ----------------
+  const submitOrderBtn = document.getElementById('submit');
+  const paymentReceiptInput = document.getElementById('paymentReceipt');
+  if (submitOrderBtn) {
+    submitOrderBtn.addEventListener('click', async () => {
+      if (!paymentReceiptInput.files.length) { alert('Please upload your payment receipt!'); return; }
+
+      const receiptFile = paymentReceiptInput.files[0];
+      const userData = JSON.parse(localStorage.getItem('shopUser'));
+      const customerRequest = document.getElementById('customerRequest').value;
+      const deliveryDate = document.getElementById('deliveryDate').value;
+      const total = parseFloat(document.getElementById('cartTotal').innerText);
+
+      try {
+        const ordersRef = ref(database, 'orders');
+        const newOrderRef = push(ordersRef);
+        const orderId = newOrderRef.key;
+
+        const receiptStorageRef = storageRef(storage, `paymentReceipts/${orderId}/${receiptFile.name}`);
+        await uploadBytes(receiptStorageRef, receiptFile);
+        const receiptURL = await getDownloadURL(receiptStorageRef);
+
+        const orderData = {
+          uid: auth.currentUser.uid,
+          customerName: userData.name,
+          phone: userData.phone,
+          address: userData.address,
+          items: cart,
+          customerRequest,
+          deliveryDate,
+          total,
+          timestamp: new Date().toISOString(),
+          status: 'pending_payment_verification',
+          receiptURL
+        };
+
+        await set(newOrderRef, orderData);
+        alert('✅ Order submitted! Payment is pending verification.');
+
+        cart = [];
+        updateCart();
+        paymentModal.style.display = 'none';
+        cartSidebar.classList.remove('open');
+        paymentReceiptInput.value = '';
+        document.getElementById('customerRequest').value = '';
+
+      } catch (error) {
+        console.error('❌ Error submitting order:', error);
+        alert('Failed to submit order. Please try again.');
+      }
+    });
+  }
+
+  // ---------------- GOOGLE SIGN-IN ----------------
+  const googleSignInBtn = document.getElementById('googleSignIn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userInfoDiv = document.getElementById('userInfo');
+
+  if (googleSignInBtn && logoutBtn && userInfoDiv) {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        if (user.isAnonymous) {
+          userInfoDiv.innerText = 'Browsing as Guest';
+          googleSignInBtn.style.display = 'inline-block';
+          logoutBtn.style.display = 'none';
+        } else {
+          userInfoDiv.innerText = `Signed in as ${user.displayName} (${user.email})`;
+          googleSignInBtn.style.display = 'none';
+          logoutBtn.style.display = 'inline-block';
+          loadUserOrders(user.uid);
+        }
+      }
+    });
+
+
+    googleSignInBtn.addEventListener('click', async () => {
+      try { await signInWithPopup(auth, provider); } 
+      catch (err) { console.error("Google Sign-in error:", err); alert("Google Sign-in failed."); }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+      signInAnonymously(auth);
+    });
+  }
+
+  function loadUserOrders(uid) {
+    const ordersRef = ref(database, 'orders');
+    onValue(ordersRef, snapshot => {
+      const orders = snapshot.val() || {};
+      const userOrders = Object.values(orders).filter(o => o.uid === uid);
+      console.log("User orders:", userOrders);
+      // TODO: render userOrders in a div in your UI
+    });
+  }
+
 });
 
-// Product descriptions
+// ---------------- PRODUCT DESCRIPTIONS ----------------
 const productDescriptions = {
   "Sardine Puff (25pcs)": "🥐 Hand laminated pastry\n🌶️ Pedas rate (6/10)\n🌟 Crunchy bila makan panas panas\n😋 10/10 insyallah",
   "Japanese Cream Puff (40pcs)": "🧊 Crunchy di atas bila sejuk\n🌟 Ice creamy like\n🧒 Children will love this!\n😋 10/10 insyallah",
@@ -470,12 +468,36 @@ const productDescriptions = {
   "Pandan Gula Melaka Cake": "🧁 Available in cuppies of 12(RM60 @25 RM125)\n🌟 Paling favourite mak mak\n😋 10/10 insyallah",
   "Brownies (Hazelnut Topping) 9''": "🍫 Dark chocolate Hazelnut Spread untuk topping\n🍰 Fudggy\n✅ Wordings boleh\n➕ Toppping extra with additional charges",
   "Pannacotta": "🕰️ 3-4 days prior to date booking\n💵 Price per piece (Lychee/Peach/Mango RM4.5 @ Berries RM6)\n⭐ Can choose up to 2 flavours if order 25pcs",
-  "Cheestarts (49pcs)": "🕰️ 3-4 days prior to date booking\n💎 2  pilihan toppings (assorted @ fruits)\n🍫 Toppings custom boleh tulis dalam customer request dalam cart XXXXXXXXXXXXXXXXXXXXX_RECONFIRM_XXXXXXXXXXXXXXXXXXXXXXXXXXXXx\n✅ Toppings subject to availability",
+  "Cheestarts (49pcs)": "🕰️ 3-4 days prior to date booking\n💎 2  pilihan toppings (assorted @ fruits)\n🍫 Toppings custom boleh tulis dalam customer request dalam cart\n✅ Toppings subject to availability",
   "Creme Brulee": "25 pcs mini pack",
   "Seasalt Choc Chip Cookies (~220gm)": "🍬 Available untuk doorgifts(>RM5/pack)\n🍫 Dark Chocolate berkualiti\n😋 Ketagih rate 9/10\n🍡 Manis sedang sedang + seasalt flakes sikit dekat atas cookies",
   "Soft Cookies": "🍫 Dark Chocolate\n🍬 Not too sweet\n🤏 Too sedap to resist",
   "Koleh Kacang 12''": " ",
   "Pulut Sekaya 10''": " ",
+  //all under this, dscription is AI, not from menu
   "Kaswi Pandan 10''": "81 pcs",
-  "Sandwich (25 pcs)": "🍖 Gourmet Chicken @ Beef Pepperoni Strips @ Tuna \n🏷️ Additional charge for 🍅 & easy bite cut"
+  "Sandwich (25 pcs)": "🍖 Gourmet Chicken @ Beef Pepperoni Strips @ Tuna \n🏷️ Additional charge for 🍅 & easy bite cut",
+  "Koci Santan": "🥥 Inti kelapa manis\n🍃 Aroma daun pisang\n😋 Lembut & lemak berkrim",
+  "Cinnamon rolls": "🍥 Cinnamon wangi\n🧈 Lembut & moist\n😋 Best dimakan suam",
+  "Lompat Tikam (16-18 pax)": "🍧 Dessert Pantai Timur\n🥥 Santan lemak berkrim\n🌴 Manis seimbang & menyegarkan",
+  "Tepung Pelita": "🥥 Lapisan santan lemak\n🍃 Pandan wangi\n😋 Classic kuih tradisional",
+  "Victoria Sandwich Cake 9''": "🍰 Kek lembut berlapis\n🍓 Filling ringan & fresh\n😋 Tak muak, sesuai semua",
+  "Moist Chocolate Cake 10''": "🍫 Chocolate pekat\n🍰 Moist & soft\n😋 Chocolate lovers wajib cuba",
+  "Kek Sarang Semut": "🍯 Tekstur berlubang unik\n🍰 Manis sederhana\n😋 Old school favourite",
+  "Banana Youghurt Cheese 9''": "🍌 Rasa pisang natural\n🧀 Cheese & yoghurt balance\n😋 Tak muak",
+  "Mix Fruit Pastry Puff": "🥐 Pastry rangup\n🍓 Mix fruits segar\n😋 Manis & fresh",
+  "Pudding Raja Kelantan": "🍮 Dessert premium\n🥥 Kaya santan & susu\n✨ Sesuai untuk event besar",
+  "Buko Pandan 10''": "🥥 Pandan & kelapa muda\n🍨 Creamy & sejuk\n😋 Dessert viral favourite",
+  "Srimuka Pandan 10''": "🍚 Pulut lembut\n🍃 Pandan wangi\n😋 Lemak manis seimbang",
+  "Srimuka Pandan Bakar 10''": "🔥 Dibakar di atas\n🍃 Aroma pandan lebih naik\n😋 Versi lebih padu",
+  "Beef Lasagna (1 Foil Box)": "🍝 Beef filling banyak\n🧀 Cheesy & creamy\n😋 Sesuai makan ramai",
+  "Fruit Puff (50 pcs)": "🥐 Puff rangup\n🍓 Buah segar atas\n😋 Sesuai doorgift",
+  "Sourcream Buttercake 10''": "🧈 Buttercake moist\n🍋 Slight sourcream taste\n😋 Tak muak",
+  "Lopes Pandan": "🍃 Pandan wangi\n🥥 Kelapa parut segar\n🍯 Gula melaka cair",
+  "Chocolate Chip Muffin": "🍫 Chocolate chip banyak\n🧁 Lembut & moist\n😋 Sesuai breakfast",
+  "Carrot Cake": "🥕 Carrot parut halus\n🧀 Cream cheese topping\n😋 Tak muak",
+  "Neapolitian Marble Cake 7''": "🍰 3 rasa dalam satu\n🎨 Corak marble cantik\n😋 Kanak-kanak suka",
+  "Chiken Pie (25 pcs)": "🥧 Pastry rangup\n🍗 Inti ayam berperisa\n😋 Best makan panas",
+  "Cream Horn": "🥐 Pastry rangup\n🍦 Cream filling lembut\n😋 Manis sederhana",
+  "Kek Tapak Kuda": "🍰 Kek gulung lembut\n🥜 Inti kacang berkrim\n😋 Classic favourite",
 };

@@ -790,6 +790,19 @@
         <button id="deleteConfirmNo">Cancel</button>
       </div>
     </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h2>Here is the QR for payment. Upload your reciept once you finished payment.</h2>
+        <div class="receipt-upload">
+          <img src="./assets/comellote-full.png" alt="Payment QR Code" style="width:200px; height:200px; margin-bottom:12px;border-style: solid;border-width: 1px;border-color: #333;" />
+          <label for="paymentReceipt">Upload Payment Receipt:</label>
+          <input type="file" id="paymentReceipt" accept="image/*,.pdf" />
+        </div>
+        <button id="submit" style="margin-top:12px;">Submit Order</button>
+      </div>
+    </div>
   </div>
 </body>
 </html>
